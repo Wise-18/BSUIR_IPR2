@@ -1,0 +1,28 @@
+﻿@using AuthDemo.API.Models
+@using AuthDemo.BlazorWebApplication.Services
+
+<div class="product-details">
+    @if (SelectedItem != null)
+    {
+        <div class="card">
+            <div class="card-header">
+                <h3>@SelectedItem.Name</h3>
+            </div>
+            <div class="card-body">
+                <p><strong>Идентификатор:</strong> @SelectedItem.Id</p>
+                <p><strong>Описание:</strong> @SelectedItem.Description</p>
+                <p><strong>Дата создания:</strong> @SelectedItem.CreatedDate.ToString("dd.MM.yyyy HH:mm")</p>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    /* Выбранный элемент для отображения деталей */
+    [Parameter]
+    public DataModel? SelectedItem { get; set; }
+
+    /* Сервис данных */
+    [CascadingParameter]
+    public DataService DataService { get; set; } = default!;
+}

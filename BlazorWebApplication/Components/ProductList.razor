@@ -1,0 +1,42 @@
+﻿@using AuthDemo.API.Models
+@using AuthDemo.BlazorWebApplication.Services
+
+<div class="product-list">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Название</th>
+                <th>Описание</th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Items)
+            {
+                <tr>
+                    <td>@item.Name</td>
+                    <td>@item.Description</td>
+                    <td>
+                        <button class="btn btn-primary" @onclick="() => OnDetailClick.InvokeAsync(item)">
+                            Подробно
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    /* Список элементов для отображения */
+    [Parameter]
+    public List<DataModel> Items { get; set; } = new();
+
+    /* Событие клика по кнопке "Подробно" */
+    [Parameter]
+    public EventCallback<DataModel> OnDetailClick { get; set; }
+
+    /* Сервис данных */
+    [CascadingParameter]
+    public DataService DataService { get; set; } = default!;
+}

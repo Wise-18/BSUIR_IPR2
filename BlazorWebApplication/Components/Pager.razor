@@ -1,0 +1,49 @@
+﻿@namespace AuthDemo.BlazorWebApplication.Components
+
+<div class="pager">
+    <nav>
+        <ul class="pagination">
+            @if (TotalPages > 1)
+            {
+                @if (CurrentPage > 1)
+                {
+                    <li class="page-item">
+                        <button class="page-link" @onclick="async () => await OnPageSelected.InvokeAsync(CurrentPage - 1)">
+                            &laquo;
+                        </button>
+                    </li>
+                }
+
+                @for (int i = 1; i <= TotalPages; i++)
+                {
+                    var pageNumber = i;
+                    <li class="page-item @(pageNumber == CurrentPage ? "active" : "")">
+                        <button class="page-link" @onclick="async () => await OnPageSelected.InvokeAsync(pageNumber)">
+                            @pageNumber
+                        </button>
+                    </li>
+                }
+
+                @if (CurrentPage < TotalPages)
+                {
+                    <li class="page-item">
+                        <button class="page-link" @onclick="async () => await OnPageSelected.InvokeAsync(CurrentPage + 1)">
+                            &raquo;
+                        </button>
+                    </li>
+                }
+            }
+        </ul>
+    </nav>
+</div>
+
+@code {
+    [Parameter]
+    public int CurrentPage { get; set; }
+
+    [Parameter]
+    public int TotalPages { get; set; }
+
+    [Parameter]
+    public EventCallback<int> OnPageSelected { get; set; }
+}

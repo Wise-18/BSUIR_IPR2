@@ -1,0 +1,32 @@
+﻿@namespace AuthDemo.BlazorWebApplication.Components
+
+<div class="category-selector">
+    <select class="form-select" value="@SelectedCategory" @onchange="OnCategoryChanged">
+        <option value="">Все категории</option>
+        @foreach (var category in DataService.GetCategories())
+        {
+            <option value="@category">@category</option>
+        }
+    </select>
+</div>
+
+@code {
+    [Parameter]
+    public string? SelectedCategory { get; set; }
+
+    [Parameter]
+    public EventCallback<string?> SelectedCategoryChanged { get; set; }
+
+    [CascadingParameter]
+    public DataService DataService { get; set; } = default!;
+
+    /* Обработчик изменения категории */
+    private async Task OnCategoryChanged(ChangeEventArgs e)
+    {
+        var newCategory = e.Value?.ToString();
+        if (SelectedCategory != newCategory)
+        {
+            await SelectedCategoryChanged.InvokeAsync(newCategory);
+        }
+    }
+}

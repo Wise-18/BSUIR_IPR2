@@ -1,0 +1,160 @@
+﻿@page "/authentication/register"
+@using AuthDemo.UI.Models
+@inject IAuthService AuthService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Register</PageTitle>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="mb-0">Register</h3>
+            </div>
+            <div class="card-body">
+                @if (!string.IsNullOrEmpty(error))
+                {
+                    <div class="alert alert-danger">@error</div>
+                }
+
+                <EditForm Model="@registerModel" OnValidSubmit="HandleRegister">
+                    <DataAnnotationsValidator />
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="username">Username</label>
+                                <InputText id="username" @bind-Value="registerModel.Username" class="form-control" />
+                                <ValidationMessage For="@(() => registerModel.Username)" class="text-danger" />
+                            </div>
+
+                            <div class="form-group mb-3">
+                                <label for="email">Email</label>
+                                <InputText id="email" @bind-Value="registerModel.Email" class="form-control" />
+                                <ValidationMessage For="@(() => registerModel.Email)" class="text-danger" />
+                            </div>
+
+                            <div class="form-group mb-3">
+                                <label for="password">Password</label>
+                                <InputText type="password" id="password" @bind-Value="registerModel.Password" class="form-control" />
+                                <ValidationMessage For="@(() => registerModel.Password)" class="text-danger" />
+                            </div>
+
+                            <div class="form-group mb-3">
+                                <label for="confirmPassword">Confirm Password</label>
+                                <InputText type="password" id="confirmPassword" @bind-Value="registerModel.ConfirmPassword" class="form-control" />
+                                <ValidationMessage For="@(() => registerModel.ConfirmPassword)" class="text-danger" />
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label for="firstName">First Name</label>
+                                <InputText id="firstName" @bind-Value="registerModel.FirstName" class="form-control" />
+                            </div>
+
+                            <div class="form-group mb-3">
+                                <label for="lastName">Last Name</label>
+                                <InputText id="lastName" @bind-Value="registerModel.LastName" class="form-control" />
+                            </div>
+
+                            <div class="form-group mb-3">
+                                <label for="avatar">Avatar</label>
+                                <InputFile id="avatar" OnChange="OnFileChange" class="form-control" accept=".jpg,.jpeg,.png" />
+                            </div>
+
+                            @if (previewUrl != null)
+                            {
+                                <div class="mt-2">
+                                    <img src="@previewUrl" class="img-thumbnail" style="max-width: 200px" alt="Avatar preview" />
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary" disabled="@isLoading">
+                            @if (isLoading)
+                            {
+                                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                <span class="ms-1">Processing...</span>
+                            }
+                            else
+                            {
+                                <span>Register</span>
+                            }
+                        </button>
+                    </div>
+                </EditForm>
+            </div>
+            <div class="card-footer text-center">
+                <p class="mb-0">
+                    Already have an account? <a href="authentication/login">Login here</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private RegisterModel registerModel = new();
+    private bool isLoading;
+    private string? error;
+    private string? previewUrl;
+
+    protected override void OnInitialized()
+    {
+        if (AuthService.IsAuthenticated)
+        {
+            NavigationManager.NavigateTo("/");
+        }
+    }
+
+    private async Task OnFileChange(InputFileChangeEventArgs e)
+    {
+        try
+        {
+            var file = e.File;
+            if (file != null)
+            {
+                registerModel.Avatar = file;
+
+                // Create preview
+                var buffer = new byte[file.Size];
+                await file.OpenReadStream(maxAllowedSize: 1024 * 1024 * 5).ReadAsync(buffer);
+                previewUrl = $"data:image/png;base64,{Convert.ToBase64String(buffer)}";
+            }
+        }
+        catch (Exception ex)
+        {
+            error = "Error loading image. Please try a different file.";
+        }
+    }
+
+    private async Task HandleRegister()
+    {
+        try
+        {
+            isLoading = true;
+            error = null;
+
+            var result = await AuthService.RegisterAsync(registerModel);
+            if (result)
+            {
+                NavigationManager.NavigateTo("/authentication/login");
+            }
+            else
+            {
+                error = "Registration failed. Please try again.";
+            }
+        }
+        catch (Exception ex)
+        {
+            error = "An error occurred during registration. Please try again.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

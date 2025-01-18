@@ -1,0 +1,14 @@
+﻿@page "/"
+
+<PageTitle>Home</PageTitle>
+
+<AuthorizeView>
+    <Authorized>
+        <h1>Welcome, @context.User.Identity?.Name!</h1>
+        <p>You are logged in and can access all features of the application.</p>
+    </Authorized>
+    <NotAuthorized>
+        <h1>Welcome to AuthDemo</h1>
+        <p>Please <a href="authentication/login">log in</a> or <a href="authentication/register">register</a> to access the application.</p>
+    </NotAuthorized>
+</AuthorizeView>

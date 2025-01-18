@@ -1,0 +1,139 @@
+﻿@page "/catalog"
+@using AuthDemo.API.Models
+@using AuthDemo.BlazorWebApplication.Services
+@using AuthDemo.BlazorWebApplication.Components
+
+<PageTitle>Каталог</PageTitle>
+
+<h3>Каталог</h3>
+
+@if (!_dataService.IsApiAvailable)
+{
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        <strong>Внимание!</strong> Не удалось подключиться к API. Отображаются тестовые данные.
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<CascadingValue Value="@_dataService">
+    <div class="catalog-container">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="filters mb-4">
+                    <CategorySelector @bind-SelectedCategory="@_selectedCategory" />
+                </div>
+            </div>
+
+            <div class="col-md-9">
+                <div class="products mb-4">
+                    <ProductList Items="@_currentItems" OnDetailClick="@HandleDetailClick" />
+                </div>
+
+                @if (_totalPages > 1)
+                {
+                    <div class="pagination mb-4">
+                        <Pager CurrentPage="@_currentPage"
+                               TotalPages="@_totalPages"
+                               OnPageSelected="@HandlePageSelected" />
+                    </div>
+                }
+
+                @if (_selectedItem != null)
+                {
+                    <div class="details">
+                        <ProductDetails SelectedItem="@_selectedItem" />
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</CascadingValue>
+
+@code {
+    [Inject]
+    private DataService _dataService { get; set; } = default!;
+
+    private string? _selectedCategory;
+    private int _currentPage = 1;
+    private int _pageSize = 5;
+    private int _totalPages;
+    private List<DataModel> _currentItems = new();
+    private DataModel? _selectedItem;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _dataService.OnDataChanged += HandleDataChanged;
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        await _dataService.GetItemsAsync();
+        UpdateCurrentItems();
+    }
+
+    private void HandleDataChanged()
+    {
+        InvokeAsync(() =>
+        {
+            UpdateCurrentItems();
+            StateHasChanged();
+        });
+    }
+
+    private void UpdateCurrentItems()
+    {
+        var totalItems = _dataService.GetTotalItems(_selectedCategory);
+        _totalPages = (int)Math.Ceiling(totalItems / (double)_pageSize);
+
+        // Проверяем, не вышли ли мы за пределы доступных страниц после фильтрации
+        if (_currentPage > _totalPages && _totalPages > 0)
+        {
+            _currentPage = _totalPages;
+        }
+
+        _currentItems = _dataService.GetFilteredItems(_selectedCategory, _currentPage, _pageSize);
+    }
+
+    protected override void OnParametersSet()
+    {
+        UpdateCurrentItems();
+    }
+
+    private async Task HandlePageSelected(int page)
+    {
+        if (_currentPage != page)
+        {
+            _currentPage = page;
+            UpdateCurrentItems();
+            StateHasChanged();
+        }
+    }
+
+    private void HandleDetailClick(DataModel item)
+    {
+        _selectedItem = item;
+        _dataService.SelectItem(item);
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        if (_dataService != null)
+        {
+            _dataService.OnDataChanged -= HandleDataChanged;
+        }
+    }
+
+    /* Обработчик изменения выбранной категории */
+    private async Task OnSelectedCategoryChanged(string? newCategory)
+    {
+        if (_selectedCategory != newCategory)
+        {
+            _selectedCategory = newCategory;
+            _currentPage = 1; // Сбрасываем на первую страницу при смене категории
+            UpdateCurrentItems();
+            StateHasChanged();
+        }
+    }
+}

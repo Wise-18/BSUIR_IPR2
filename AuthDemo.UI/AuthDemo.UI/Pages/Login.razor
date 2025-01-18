@@ -1,0 +1,99 @@
+﻿@page "/login"
+@using AuthDemo.UI.Services
+@using AuthDemo.UI.Models
+@inject IAuthService AuthService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Login</PageTitle>
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="mb-0">Login</h3>
+            </div>
+            <div class="card-body">
+                @if (!string.IsNullOrEmpty(error))
+                {
+                    <div class="alert alert-danger">@error</div>
+                }
+
+                <EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
+                    <DataAnnotationsValidator />
+
+                    <div class="form-group mb-3">
+                        <label for="username">Username</label>
+                        <InputText id="username" @bind-Value="loginModel.Username" class="form-control" />
+                        <ValidationMessage For="@(() => loginModel.Username)" class="text-danger" />
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="password">Password</label>
+                        <InputText type="password" id="password" @bind-Value="loginModel.Password" class="form-control" />
+                        <ValidationMessage For="@(() => loginModel.Password)" class="text-danger" />
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary" disabled="@isLoading">
+                            @if (isLoading)
+                            {
+                                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                <span class="ms-1">Loading...</span>
+                            }
+                            else
+                            {
+                                <span>Login</span>
+                            }
+                        </button>
+                    </div>
+                </EditForm>
+            </div>
+            <div class="card-footer text-center">
+                <p class="mb-0">
+                    Don't have an account? <a href="authentication/register">Register here</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private LoginModel loginModel = new();
+    private bool isLoading;
+    private string? error;
+
+    protected override void OnInitialized()
+    {
+        if (AuthService.IsAuthenticated)
+        {
+            NavigationManager.NavigateTo("/");
+        }
+    }
+
+    private async Task HandleLogin()
+    {
+        try
+        {
+            isLoading = true;
+            error = null;
+
+            var result = await AuthService.LoginAsync(loginModel);
+            if (result)
+            {
+                NavigationManager.NavigateTo("/");
+            }
+            else
+            {
+                error = "Invalid username or password.";
+            }
+        }
+        catch (Exception ex)
+        {
+            error = "An error occurred during login. Please try again.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}
